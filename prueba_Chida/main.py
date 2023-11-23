@@ -149,12 +149,11 @@ def main(page: ft.Page) -> None:
             return finger_down
         #---------------------------------------------------------------------------------------------#
         with mp_hands.Hands(
-        static_image_mode = False,
-        max_num_hands = 1,
-        min_detection_confidence = 0.5
+            static_image_mode = False,
+            max_num_hands = 1,
+            min_detection_confidence = 0.5
         ) as hands:
-            if correrProgramaGes == True:
-                while True:
+                while correrProgramaGes:
                     #Crear ventana
                     ret, frame = cap.read()
                     if ret == False:
@@ -201,8 +200,8 @@ def main(page: ft.Page) -> None:
 
                 time.sleep(1)
 
-            cap.release()
-            cv2.destroyAllWindows()
+                cap.release()
+                cv2.destroyAllWindows()
     
     def button_clicked(e):
         #Declaramos la variables global que controlan los hilos
@@ -214,15 +213,14 @@ def main(page: ft.Page) -> None:
             correrProgramaVoz = True
             
         else:
-             switchVoz.label = ("Interacción con la Voz: Inactiva")
-             correrProgramaVoz = False
+            switchVoz.label = ("Interacción con la Voz: Inactiva")
+            correrProgramaVoz = False
         if switchGes.value == True:
-             switchGes.label = ("Interacción con la mano: Activa")
-             correrProgramaGes = True
-             
+            switchGes.label = ("Interacción con la mano: Activa")
+            correrProgramaGes = True
         else:
-             switchGes.label = ("Interacción con la mano: Inactiva")
-             correrProgramaGes = False
+            switchGes.label = ("Interacción con la mano: Inactiva")
+            correrProgramaGes = False
         #Actualizamos la página     
         page.update()
     
