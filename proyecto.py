@@ -107,7 +107,7 @@ def interfaz_gestual():
     #Margen del area azul
     X_Y_INI = 100
 
-    #--------------------------------Funcuón calcuclar distancia ---------------------------------#
+    #--------------------------------Función calcuclar distancia ---------------------------------#
     def calculate_distance(x1, y1, x2, y2):
         p1 = np.array([x1, y1])
         p2 = np.array([x2, y2])
@@ -198,9 +198,10 @@ if __name__ == '__main__':
     hilo_gestual = threading.Thread(target=interfaz_gestual)
 
     # Inicia los hilos
-    hilo_voz.start()
+    #hilo_voz.start()
     hilo_gestual.start()
 
     # Espera a que ambos hilos terminen (esto puede no ser necesario dependiendo de tus requerimientos)
     hilo_voz.join()
     hilo_gestual.join()
+
