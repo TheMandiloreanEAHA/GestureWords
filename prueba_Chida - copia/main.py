@@ -125,18 +125,13 @@ def main(page: ft.Page) -> None:
     #--- Define la función de la interfaz gestual ---# 
     def interfaz_gestual():
         #Código de la interfaz gestual        
-        global correrProgramaGes #Jalamos la variable global    
-
-        def palm_centroid(coordinates_list):
-            coordinates = np.array(coordinates_list)
-            centroid = np.mean(coordinates, axis=0)
-            centroid = int(centroid[0]), int(centroid[1])
-            return centroid
-
-        mp_drawing = mp.solutions.drawing_utils
-        mp_drawing_styles = mp.solutions.drawing_styles
+        global correrProgramaGes #Jalamos la variable global        
+    
+        #Instanciamos la solución de MediaPipe (Hands)
         mp_hands = mp.solutions.hands
+        mp_drawing = mp.solutions.drawing_utils #Para dibujar los resultados
 
+        #Configurar la captura de video con OpenCV
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
         #Definir los puntos de la pantalla
@@ -147,145 +142,115 @@ def main(page: ft.Page) -> None:
 
         #Color del puntero
         color_mouse = (255, 0, 255)
+
         relacion_aspecto = (PANTALLA_X_FIN - PANTALLA_X_INI) / (PANTALLA_Y_FIN - PANTALLA_Y_INI)
 
         #Margen del area azul
         X_Y_INI = 100
 
-        # Pulgar
-        thumb_points = [1, 2, 4]
+        #--------------------------------Función calcuclar distancia ---------------------------------#
+        def calculate_distance(x1, y1, x2, y2):
+            p1 = np.array([x1, y1])
+            p2 = np.array([x2, y2])
+            return np.linalg.norm(p1 - p2)
+        #---------------------------------------------------------------------------------------------#
+        #--------------------------------Funcion para hacer click-------------------------------------#
+        def detect_finger_down(hand_landmarks):
+            finger_down = False
+            color_base = (255, 0, 112)
+            color_index = (255, 198, 82)
+            x_base1 = int(hand_landmarks.landmark[0].x * width)
+            y_base1 = int(hand_landmarks.landmark[0].y * height)
+            x_base2 = int(hand_landmarks.landmark[9].x * width)
+            y_base2 = int(hand_landmarks.landmark[9].y * height)
+            x_index = int(hand_landmarks.landmark[8].x * width)
+            y_index = int(hand_landmarks.landmark[8].y * height)
+            d_base = calculate_distance(x_base1, y_base1, x_base2, y_base2)
+            d_base_index = calculate_distance(x_base1, y_base1, x_index, y_index)
+            if d_base_index < d_base:
+                finger_down = True
+                color_base = (255, 0, 255)
+                color_index = (255, 0, 255)
+            cv2.circle(output, (x_base1, y_base1), 5, color_base, 2)
+            cv2.circle(output, (x_index, y_index), 5, color_index, 2)
+            cv2.line(output, (x_base1, y_base1), (x_base2, y_base2), color_base, 3)
+            cv2.line(output, (x_base1, y_base1), (x_index, y_index), color_index, 3)
+            return finger_down
+        #---------------------------------------------------------------------------------------------#
+        #--------------------------------Funcion para hacer enter-------------------------------------#
+        def detect_hand_closed(hand_landmarks):
+            x_index = int(hand_landmarks.landmark[8].x * width)
+            y_index = int(hand_landmarks.landmark[8].y * height)
+            x_middle_base = int(hand_landmarks.landmark[0].x * width)
+            y_middle_base = int(hand_landmarks.landmark[0].y * height)
+            
+            # Calcular la distancia entre la punta del dedo índice y la base del dedo medio
+            distance = calculate_distance(x_index, y_index, x_middle_base, y_middle_base)
 
-        # Índice, medio, anular y meñique
-        palm_points = [0, 1, 2, 5, 9, 13, 17]
-        fingertips_points = [8, 12, 16, 20]
-        finger_base_points =[6, 10, 14, 18]
+            # Puedes ajustar este umbral según sea necesario
+            threshold = 30
 
+            # Si la distancia es menor que el umbral, consideramos que la mano está cerrada
+            return distance < threshold
+        #---------------------------------------------------------------------------------------------#
         with mp_hands.Hands(
-            model_complexity=1,
-            max_num_hands=1,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5) as hands:
+        static_image_mode = False,
+        max_num_hands = 1,
+        min_detection_confidence = 0.5  
+        ) as hands:
+            
+            while correrProgramaGes:
+                #Crear ventana
+                ret, frame = cap.read()
+                if ret == False:
+                    break
+                height, width, _ = frame.shape
+                frame = cv2.flip(frame,1)
 
-            while True:
-                if correrProgramaGes == True:
-                    ret, frame = cap.read()
-                    if ret == False:
-                        break
-                    frame = cv2.flip(frame, 1)
-                    height, width, _ = frame.shape
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    results = hands.process(frame_rgb)
-                    fingers_counter = "_"
-                    thickness = [2, 2, 2, 2, 2]
+                #Dibujamos el área proporcional
+                area_width = width - X_Y_INI *2
+                area_height = int(area_width / relacion_aspecto)
+                aux_image = np.zeros(frame.shape, np.uint8)
 
-                    #Dibujamos el área proporcional
-                    area_width = width - X_Y_INI *2
-                    area_height = int(area_width / relacion_aspecto)
-                    aux_image = np.zeros(frame.shape, np.uint8)
+                #Crear el recuadro con los puntos encontrados
+                aux_image = cv2.rectangle(aux_image, (X_Y_INI, X_Y_INI), (X_Y_INI + area_width, X_Y_INI + area_height), (255,0,0), -1)
+                output = cv2.addWeighted(frame, 1, aux_image, 0.7,0)
 
-                    #Crear el recuadro con los puntos encontrados
-                    aux_image = cv2.rectangle(aux_image, (X_Y_INI, X_Y_INI), (X_Y_INI + area_width, X_Y_INI + area_height), (255,0,0), -1)
-                    output = cv2.addWeighted(frame, 1, aux_image, 0.7,0)
+                #Convertimos el frame en código rgb
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                resultado = hands.process(frame_rgb)
 
-                    #Convertimos el frame en código rgb
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                #Si detecta una manos
+                if resultado.multi_hand_landmarks is not None:
+                    for hand_landmarks in resultado.multi_hand_landmarks:
+                        #Obtener las coordenadas de la mano
+                        x = int(hand_landmarks.landmark[9].x * width)
 
-                    if results.multi_hand_landmarks:
-                        coordinates_thumb = []
-                        coordinates_palm = []
-                        coordinates_ft = []
-                        coordinates_fb = []
-                        for hand_landmarks in results.multi_hand_landmarks:
-                                #Obtener las coordenadas de la mano
-                                x = int(hand_landmarks.landmark[9].x * width)
-                                y = int(hand_landmarks.landmark[9].y * height)
-                                xm = np.interp(x,(X_Y_INI, X_Y_INI+ area_width), (PANTALLA_X_INI, PANTALLA_X_FIN))
-                                ym = np.interp(y,(X_Y_INI, X_Y_INI+ area_height), (PANTALLA_Y_INI, PANTALLA_Y_FIN))
 
-                                #Mover el mouse
-                                pyautogui.moveTo(int(xm), int(ym))
-                                for index in thumb_points:
-                                    x = int(hand_landmarks.landmark[index].x * width)
-                                    y = int(hand_landmarks.landmark[index].y * height)
-                                    coordinates_thumb.append([x, y])
-                                
-                                for index in palm_points:
-                                    x = int(hand_landmarks.landmark[index].x * width)
-                                    y = int(hand_landmarks.landmark[index].y * height)
-                                    coordinates_palm.append([x, y])
-                                
-                                for index in fingertips_points:
-                                    x = int(hand_landmarks.landmark[index].x * width)
-                                    y = int(hand_landmarks.landmark[index].y * height)
-                                    coordinates_ft.append([x, y])
-                                
-                                for index in finger_base_points:
-                                    x = int(hand_landmarks.landmark[index].x * width)
-                                    y = int(hand_landmarks.landmark[index].y * height)
-                                    coordinates_fb.append([x, y])
-                                ##########################
-                                # Pulgar
-                                p1 = np.array(coordinates_thumb[0])
-                                p2 = np.array(coordinates_thumb[1])
-                                p3 = np.array(coordinates_thumb[2])
+                        y = int(hand_landmarks.landmark[9].y * height)
+                        xm = np.interp(x,(X_Y_INI, X_Y_INI+ area_width), (PANTALLA_X_INI, PANTALLA_X_FIN))
+                        ym = np.interp(y,(X_Y_INI, X_Y_INI+ area_height), (PANTALLA_Y_INI, PANTALLA_Y_FIN))
 
-                                l1 = np.linalg.norm(p2 - p3)
-                                l2 = np.linalg.norm(p1 - p3)
-                                l3 = np.linalg.norm(p1 - p2)
+                        #Mover el mouse
+                        pyautogui.moveTo(int(xm), int(ym))
+                        if detect_finger_down(hand_landmarks):
+                            pyautogui.click()
+                        if detect_hand_closed(hand_landmarks):
+                            # Acción a realizar cuando la mano está cerrada (por ejemplo, presionar la tecla Enter)
+                            pyautogui.press('enter')
 
-                                # Calcular el ángulo
-                                angle = degrees(acos((l1**2 + l3**2 - l2**2) / (2 * l1 * l3)))
-                                thumb_finger = np.array(False)
-                                if angle > 150:
-                                    thumb_finger = np.array(True)
-                                
-                                ################################
-                                # Índice, medio, anular y meñique
-                                nx, ny = palm_centroid(coordinates_palm)
-                                cv2.circle(frame, (nx, ny), 3, (0, 255, 0), 2)
-                                coordinates_centroid = np.array([nx, ny])
-                                coordinates_ft = np.array(coordinates_ft)
-                                coordinates_fb = np.array(coordinates_fb)
+                        #Pner un circulo a donde movimos la mano
+                        cv2.circle(output, (x,y), 10, color_mouse, 3)
+                        cv2.circle(output, (x,y), 5, color_mouse, -1)
+                
+                #Mostrar pantalla 
+                cv2.imshow('output', output)
 
-                                # Distancias
-                                d_centrid_ft = np.linalg.norm(coordinates_centroid - coordinates_ft, axis=1)
-                                d_centrid_fb = np.linalg.norm(coordinates_centroid - coordinates_fb, axis=1)
-                                dif = d_centrid_ft - d_centrid_fb
-                                fingers = dif > 0
-                                fingers = np.append(thumb_finger, fingers)
-                                
-                                #Pner un circulo a donde movimos la mano
-                                cv2.circle(output, (x,y), 10, color_mouse, 3)
-                                cv2.circle(output, (x,y), 5, color_mouse, -1)
-
-                                
-                                if(fingers[0] == False):
-                                    pyautogui.press('enter')
-                                    print("Enter")
-                                    time.sleep(2)
-                                if(fingers[1]== False):
-                                    pyautogui.click()
-                                    print("click")
-                                    time.sleep(2)
-
-                                for (i, finger) in enumerate(fingers):
-                                    if finger == True:
-                                        thickness[i] = -1
-                                mp_drawing.draw_landmarks(
-                                    frame,
-                                    hand_landmarks,
-                                    mp_hands.HAND_CONNECTIONS,
-                                    mp_drawing_styles.get_default_hand_landmarks_style(),
-                                    mp_drawing_styles.get_default_hand_connections_style())
-
-                cv2.imshow("Frame", frame)
                 if cv2.waitKey(1) & 0xFF == 27:
                     break
-                
+
         cap.release()
-        cv2.destroyAllWindows()    
-    
-        
+        cv2.destroyAllWindows()
     
     def button_clicked(e):
         #Declaramos la variables global que controlan los hilos
