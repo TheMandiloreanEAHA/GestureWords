@@ -328,6 +328,15 @@ def main(page: ft.Page) -> None:
     hilo_voz.start()
     hilo_gestual.start()
 
+    #Icono de ayuda 
+    ayuda = ft.IconButton(
+                    icon=ft.icons.QUESTION_MARK,
+                    icon_color="#0061A4",
+                    icon_size=20,
+                    tooltip="Documentación",
+                    url= "https://uvmx-my.sharepoint.com/:w:/g/personal/zs20018188_estudiantes_uv_mx/EeP7neGxfYNBh3et3a942f4BOe8t--5u6ikNwphfnKXbVA?e=oguJX3"
+                )
+
     t = ft.Text(
             "Para dictar, debes decir la palabra mágica: Dictar",
             size=10,
@@ -341,11 +350,11 @@ def main(page: ft.Page) -> None:
 
     btn = ft.ElevatedButton(text="Aplicar", on_click=button_clicked)    
 
-    #tb2 = ft.TextField(label="Disabled", disabled=True, value="First name")
     tf_creditos = ft.TextField(label="Creditos", disabled=True, multiline=True, value="Creado por:\nManquitos Yahir De la caña Pérez\nErick A. Hernández Aburto\nAlex Antonio Terrones Pacheco")
 
     voz_icon = ft.Icon(name=ft.icons.MIC, color="#0061A4", size="30")
-    gest_icon = ft.Icon(name=ft.icons.BACK_HAND_OUTLINED, color="#0061A4", size="30")
+    gest_icon = ft.Icon(name=ft.icons.BACK_HAND_SHARP, color="#0061A4", size="30")
+
     
 
     row_voz = ft.Row(controls=[
@@ -358,11 +367,14 @@ def main(page: ft.Page) -> None:
                 gest_icon
             ])
     
-    page.add(row_voz, t, row_gest, btn, ft.Text(" "),tf_creditos)
+    row_btn_Y_ayuda = ft.Row(controls=[
+                                btn,
+                                ayuda
+                            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN) 
+        
+    page.add(row_voz, t, row_gest, row_btn_Y_ayuda, ft.Text(" "),tf_creditos)
 
    
 
 if __name__ == '__main__':
     ft.app(target=main)
-
-#azulfuncionando
