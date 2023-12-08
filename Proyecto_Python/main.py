@@ -50,10 +50,15 @@ directorio_script = os.path.dirname(os.path.abspath(__file__))
 
 
 def main(page: ft.Page) -> None:
+    # Construye la ruta completa al archivo usando la ruta del script   
+    ruta_nota = os.path.join(directorio_script, "nota1.mp3")
+    # Reproduce el archivo de audio
+    playsound(ruta_nota)
+
     page.title = 'GestureWords'
     page.theme_mode = 'light'
-    page.window_width = 400
-    page.window_height = 200
+    page.window_width = 410
+    page.window_height = 400
     page.window_resizable = False
     page.window_maximizable = False
     #page.vertical_alignment = ft.MainAxisAlignment.CENTER
@@ -86,13 +91,12 @@ def main(page: ft.Page) -> None:
                     audio = r.listen(source)
 
                     try:
-                        aud_text = r.recognize_google(audio, language='en-EN')
-                       
-                        if aud_text == 'active':
+                        aud_text = r.recognize_google(audio, language='es-ES ')                       
+                        if aud_text == 'dictar':
                             print("¿Qué deseas escribir?")
                             #playsound("D:/UV/7.Semestre/IntUsrAv/PracticasPython/PruebaProyecto/ProyectoInterfaces/prueba_Chida/nota3.mp3")
                             # Construye la ruta completa al archivo "nota3.mp3" usando la ruta del script   
-                            ruta_nota = os.path.join(directorio_script, "nota3.mp3")
+                            ruta_nota = os.path.join(directorio_script, "nota2.mp3")
                             # Reproduce el archivo de audio
                             playsound(ruta_nota)
                             
@@ -113,8 +117,14 @@ def main(page: ft.Page) -> None:
                             print('Acceso denegado, tu dijiste: {}'.format(aud_text))
                     except sr.UnknownValueError:
                         print("No se pudo entender el audio")
+                        #Construye el audio de error
                         tts = gTTS("Lo siento, no pude entenderte", lang='es')
-                        tts.save("error1.mp3")
+                        ruta_error = os.path.join(directorio_script, "error1.mp3")
+                        tts.save(ruta_error)
+                        # Construye la ruta completa al archivo usando la ruta del script 
+                        ruta_nota = os.path.join(directorio_script, "nota3.mp3")
+                        # Reproduce el archivo de audio
+                        playsound(ruta_nota)
                         playsound("error1.mp3")
                     except sr.RequestError as e:
                         print(f"Error al hacer la solicitud a Google: {e}")
@@ -175,7 +185,6 @@ def main(page: ft.Page) -> None:
                     height, width, _ = frame.shape
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     results = hands.process(frame_rgb)
-                    fingers_counter = "_"
                     thickness = [2, 2, 2, 2, 2]
 
                     #Dibujamos el área proporcional
@@ -266,7 +275,6 @@ def main(page: ft.Page) -> None:
                                 if(fingers[1]== False):
                                     pyautogui.click()
                                     print("click")
-                                    time.sleep(2)
 
                                 for (i, finger) in enumerate(fingers):
                                     if finger == True:
@@ -293,18 +301,22 @@ def main(page: ft.Page) -> None:
         global correrProgramaGes
         #Iniciamos las validaciones
         if switchVoz.value == True:
-            switchVoz.label = ("Interacción con la Voz: Activa")
+            switchVoz.label = ("Interacción con la Voz: Activa                      ")
             correrProgramaVoz = True
-            
+            voz_icon.color = "#0061A4"            
         else:
-            switchVoz.label = ("Interacción con la Voz: Inactiva")
+            switchVoz.label = ("Interacción con la Voz: Inactiva                    ")
             correrProgramaVoz = False
+            voz_icon.color = "#73777F"
+
         if switchGes.value == True:
-            switchGes.label = ("Interacción con la mano: Activa")
+            switchGes.label = ("Interacción con la mano: Activa                   ")
             correrProgramaGes = True
+            gest_icon.color = "#0061A4" 
         else:
-            switchGes.label = ("Interacción con la mano: Inactiva")
+            switchGes.label = ("Interacción con la mano: Inactiva                 ")
             correrProgramaGes = False
+            gest_icon.color = "#73777F"
         #Actualizamos la página     
         page.update()
     
@@ -316,20 +328,39 @@ def main(page: ft.Page) -> None:
     hilo_voz.start()
     hilo_gestual.start()
 
-    t = ft.Text()
-    switchVoz = ft.Switch(label="Interacción con la Voz: Activa", value=True, label_position=ft.LabelPosition.LEFT)#Switch de Interfaz de Voz
-    switchGes = ft.Switch(label="Interacción con la mano: Activa", value=True, label_position=ft.LabelPosition.LEFT)#Switch de Interfaz Gestual
+    t = ft.Text(
+            "Para dictar, debes decir la palabra mágica: Dictar",
+            size=10,
+            color=ft.colors.BLUE,
+            weight=ft.FontWeight.BOLD,
+            italic=True,
+        )
 
-    switchVoz.thumb_color={
-    ft.MaterialState.HOVERED: ft.colors.WHITE,
-    ft.MaterialState.FOCUSED: ft.colors.RED,
-    ft.MaterialState.DEFAULT: ft.colors.BLACK,}
+    switchVoz = ft.Switch(label="Interacción con la Voz: Activa                      ", value=True, label_position=ft.LabelPosition.LEFT)#Switch de Interfaz de Voz
+    switchGes = ft.Switch(label="Interacción con la mano: Activa                   ", value=True, label_position=ft.LabelPosition.LEFT)#Switch de Interfaz Gestual
 
-    btn = ft.ElevatedButton(text="Aplicar", on_click=button_clicked)
+    btn = ft.ElevatedButton(text="Aplicar", on_click=button_clicked)    
 
+    #tb2 = ft.TextField(label="Disabled", disabled=True, value="First name")
+    tf_creditos = ft.TextField(label="Creditos", disabled=True, multiline=True, value="Creado por:\nManquitos Yahir De la caña Pérez\nErick A. Hernández Aburto\nAlex Antonio Terrones Pacheco")
+
+    voz_icon = ft.Icon(name=ft.icons.MIC, color="#0061A4", size="30")
+    gest_icon = ft.Icon(name=ft.icons.BACK_HAND_OUTLINED, color="#0061A4", size="30")
     
 
-    page.add(switchVoz, switchGes, btn, t)
+    row_voz = ft.Row(controls=[
+                switchVoz,
+                voz_icon
+            ])
+    
+    row_gest = ft.Row(controls=[
+                switchGes,
+                gest_icon
+            ])
+    
+    page.add(row_voz, t, row_gest, btn, ft.Text(" "),tf_creditos)
+
+   
 
 if __name__ == '__main__':
     ft.app(target=main)
